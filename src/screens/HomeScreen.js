@@ -1,35 +1,63 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import Header from '../components/Header';
-import products from '../data/products';
+import { useProducts } from '../context/ProductContext';
 
 export default function HomeScreen() {
-  const totalProducts = products.length;
-  const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
-  const activeProducts = products.filter((p) => p.status === 'Active').length;
+  const { products, loading, error } = useProducts();
 
-  const stats = [
-    {
-      label: 'Total Products',
-      value: totalProducts,
-      icon: 'cube-outline',
-      color: colors.primary,
-    },
-    {
-      label: 'Total Stock',
-      value: totalStock,
-      icon: 'layers-outline',
-      color: colors.primaryLight,
-    },
-    {
-      label: 'Active Products',
-      value: activeProducts,
-      icon: 'checkmark-circle-outline',
-      color: colors.primary,
-    },
-  ];
+  const stats = useMemo(() => {
+    const totalProducts = products.length;
+    const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+    const activeProducts = products.filter((p) => p.status === 'Active').length;
+
+    return [
+      {
+        label: 'Total Products',
+        value: totalProducts,
+        icon: 'cube-outline',
+        color: colors.primary,
+      },
+      {
+        label: 'Total Stock',
+        value: totalStock,
+        icon: 'layers-outline',
+        color: colors.primaryLight,
+      },
+      {
+        label: 'Active Products',
+        value: activeProducts,
+        icon: 'checkmark-circle-outline',
+        color: colors.primary,
+      },
+    ];
+  }, [products]);
+
+  if (loading) {
+    return (
+      <View style={styles.screen}>
+        <Header title="Home" />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading dashboard...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.screen}>
+        <Header title="Home" />
+        <View style={styles.centered}>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.textSecondary} />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -58,6 +86,23 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: colors.textSecondary,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   card: {
     flexDirection: 'row',

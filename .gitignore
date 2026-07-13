@@ -17,6 +17,7 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+*.keystore
 
 # Metro
 .metro-health-check*
@@ -37,7 +38,23 @@ desktop.ini
 
 # local env files
 .env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test
 .env*.local
+
+# Supabase local dev
+.supabase/
+
+# EAS / build credentials
+credentials.json
+
+# Firebase / push notification config
+google-services.json
+GoogleService-Info.plist
 
 # typescript
 *.tsbuildinfo
@@ -55,3 +72,7 @@ desktop.ini
 .vscode/
 .idea/
 .antigravity/
+
+# cache / coverage
+coverage/
+.cache/

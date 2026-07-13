@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,14 +9,16 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import Header from '../components/Header';
 import { useProducts } from '../context/ProductContext';
+import { validateProduct } from '../utils/validators';
 
 export default function AddProductScreen({ navigation }) {
-  const { addProduct } = useProducts();
+  const { create } = useProducts();
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
@@ -25,34 +27,60 @@ export default function AddProductScreen({ navigation }) {
   const [isActive, setIsActive] = useState(true);
   const [imageUrl, setImageUrl] = useState('');
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const hasValidImage = imageUrl.trim().length > 0 && !imageLoadFailed;
 
-  const handleImageUrlChange = (text) => {
+  const handleImageUrlChange = useCallback((text) => {
     setImageUrl(text);
-    setImageLoadFailed(false); // reset error state when URL changes
-  };
+    setImageLoadFailed(false);
+  }, []);
 
-  const handleSave = () => {
+  const handleSave = useCallback(async () => {
     const productData = {
-      name,
+      name: name.trim(),
       price: Number(price),
       stock: Number(stock),
-      category,
-      location: Number(location),
+      category: category.trim(),
+      location: Number(location) || 0,
       status: isActive ? 'Active' : 'Inactive',
       image: imageUrl.trim() || '',
     };
 
-    addProduct(productData);
+    // Validate
+    const { valid, errors } = validateProduct(productData);
+    if (!valid) {
+      Alert.alert('Validation Error', errors.join('\n'));
+      return;
+    }
 
-    Alert.alert('Product Saved', `"${name}" has been added.`, [
+    // Save to Supabase
+    setSaving(true);
+    const { success, error } = await create(productData);
+    setSaving(false);
+
+    if (!success) {
+      Alert.alert('Error', error || 'Failed to save product.');
+      return;
+    }
+
+    Alert.alert('Product Saved', `"${productData.name}" has been added.`, [
       {
         text: 'OK',
-        onPress: () => navigation?.goBack(),
+        onPress: () => navigation?.navigate('Products'),
       },
     ]);
-  };
+
+    // Reset form
+    setName('');
+    setPrice('');
+    setStock('');
+    setCategory('');
+    setLocation('');
+    setIsActive(true);
+    setImageUrl('');
+    setImageLoadFailed(false);
+  }, [name, price, stock, category, location, isActive, imageUrl, create, navigation]);
 
   return (
     <View style={styles.screen}>
@@ -152,8 +180,16 @@ export default function AddProductScreen({ navigation }) {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Product</Text>
+        <TouchableOpacity
+          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color={colors.card} />
+          ) : (
+            <Text style={styles.saveButtonText}>Save Product</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -225,6 +261,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 28,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
   },
   saveButtonText: {
     color: colors.card,

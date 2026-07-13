@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../theme/colors';
@@ -14,10 +16,50 @@ import ProductCard from '../components/ProductCard';
 import { useProducts } from '../context/ProductContext';
 import useProductSearch from '../hooks/useProductSearch';
 
+const MemoizedProductCard = React.memo(ProductCard);
+
 export default function ProductsScreen({ navigation }) {
   const [query, setQuery] = useState('');
-  const { products } = useProducts();
+  const { products, loading, error, refresh } = useProducts();
   const filteredProducts = useProductSearch(products, query);
+
+  const onRefresh = useCallback(() => {
+    refresh();
+  }, [refresh]);
+
+  const renderItem = useCallback(
+    ({ item }) => <MemoizedProductCard product={item} />,
+    []
+  );
+
+  const keyExtractor = useCallback((item) => String(item.id), []);
+
+  if (loading && products.length === 0) {
+    return (
+      <View style={styles.screen}>
+        <Header title="Products" />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.statusText}>Loading products...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error && products.length === 0) {
+    return (
+      <View style={styles.screen}>
+        <Header title="Products" />
+        <View style={styles.centered}>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.textSecondary} />
+          <Text style={styles.statusText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={refresh}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -49,9 +91,17 @@ export default function ProductsScreen({ navigation }) {
       {/* Product list */}
       <FlatList
         data={filteredProducts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ProductCard product={item} />}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons
@@ -71,6 +121,30 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  statusText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  retryText: {
+    color: colors.card,
+    fontWeight: '600',
+    fontSize: 14,
   },
   actionRow: {
     flexDirection: 'row',
