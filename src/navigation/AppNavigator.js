@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 
 import HomeScreen from '../screens/HomeScreen';
-import ProductsScreen from '../screens/ProductsScreen';
+import GitHubProductsScreen from '../screens/GitHubProductsScreen';
 import AddProductScreen from '../screens/AddProductScreen';
 import CategoriesScreen from '../screens/CategoriesScreen';
 
@@ -24,9 +24,14 @@ export default function AppNavigator() {
         headerShown: false,
         tabBarIcon: ({ focused, size }) => {
           const icons = TAB_ICONS[route.name];
-          const iconName = focused ? icons.focused : icons.unfocused;
-          const iconColor = focused ? colors.primary : colors.textSecondary;
-          return <Ionicons name={iconName} size={size} color={iconColor} />;
+
+          return (
+            <Ionicons
+              name={focused ? icons.focused : icons.unfocused}
+              size={size}
+              color={focused ? colors.primary : colors.textSecondary}
+            />
+          );
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
@@ -43,10 +48,26 @@ export default function AppNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Products" component={ProductsScreen} />
-      <Tab.Screen name="Add" component={AddProductScreen} options={{ tabBarLabel: 'Add' }} />
-      <Tab.Screen name="Categories" component={CategoriesScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+      />
+
+      <Tab.Screen
+        name="Products"
+        component={GitHubProductsScreen}
+      />
+
+      <Tab.Screen
+        name="Add"
+        component={AddProductScreen}
+        options={{ tabBarLabel: 'Add' }}
+      />
+
+      <Tab.Screen
+        name="Categories"
+        component={CategoriesScreen}
+      />
     </Tab.Navigator>
   );
 }

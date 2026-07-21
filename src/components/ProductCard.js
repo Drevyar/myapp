@@ -1,51 +1,80 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import colors from '../theme/colors';
-import StatusBadge from './StatusBadge';
-import formatPrice from '../utils/formatPrice';
+import React, { useState } from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import colors from "../theme/colors";
+import StatusBadge from "./StatusBadge";
+import formatPrice from "../utils/formatPrice";
 
 export default function ProductCard({ product, onPress }) {
   const [imgError, setImgError] = useState(false);
-  const hasImage = product.image && product.image.trim().length > 0 && !imgError;
+
+  const image = product.image || product.image_url || "";
+
+  const status = product.status || product.badge_status || "Active";
+
+  const location =
+    product.location_text ||
+    `${product.location || product.location_count || 0} ${
+      (product.location || product.location_count || 0) === 1
+        ? "store"
+        : "stores"
+    }`;
+
+  const stock =
+    product.stock_text || `${product.stock || 0} in stock`;
+
+  const hasImage = image.trim().length > 0 && !imgError;
 
   return (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => onPress && onPress(product)}
       activeOpacity={0.7}
+      onPress={() => onPress?.(product)}
     >
-      {/* Product image or placeholder */}
       <View style={styles.imagePlaceholder}>
         {hasImage ? (
           <Image
-            source={{ uri: product.image }}
+            source={{ uri: image }}
             style={styles.productImage}
             resizeMode="cover"
             onError={() => setImgError(true)}
           />
         ) : (
-          <Ionicons name="laptop-outline" size={32} color={colors.textSecondary} />
+          <Ionicons
+            name="laptop-outline"
+            size={32}
+            color={colors.textSecondary}
+          />
         )}
       </View>
 
-      {/* Product info */}
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={1}>
           {product.name}
         </Text>
-        <Text style={styles.price}>{formatPrice(product.price)}</Text>
+
+        {product.price != null && (
+          <Text style={styles.price}>
+            {formatPrice(product.price)}
+          </Text>
+        )}
+
         <Text style={styles.detail}>
-          Stock: {product.stock}  •  {product.category}
+          Stock: {stock}
         </Text>
+
         <Text style={styles.detail}>
-          {product.location} {product.location === 1 ? 'store' : 'stores'}
+          Category: {product.category}
+        </Text>
+
+        <Text style={styles.detail}>
+          Location: {location}
         </Text>
       </View>
 
-      {/* Right side: badge + chevron */}
       <View style={styles.rightSection}>
-        <StatusBadge status={product.status} />
+        <StatusBadge status={status} />
+
         <Ionicons
           name="chevron-forward"
           size={20}
@@ -59,8 +88,8 @@ export default function ProductCard({ product, onPress }) {
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.card,
     borderRadius: 14,
     padding: 14,
@@ -74,14 +103,14 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 12,
     backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   productImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   info: {
     flex: 1,
@@ -89,13 +118,13 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textPrimary,
     marginBottom: 2,
   },
   price: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.primaryLight,
     marginBottom: 4,
   },
@@ -105,8 +134,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   rightSection: {
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    alignItems: "flex-end",
+    justifyContent: "space-between",
     height: 64,
   },
   chevron: {
